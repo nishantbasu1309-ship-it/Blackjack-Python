@@ -1,0 +1,144 @@
+import wx
+import random
+
+# ----------------- GAME LOGIC -----------------
+
+def create_deck():
+    deck = []
+    for _ in range(4):
+        deck += [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11]
+    random.shuffle(deck)
+    return deck
+
+def deal_card(deck):
+    return deck.pop()
+
+def calculate_score(hand):
+    score = sum(hand)
+    while 11 in hand and score > 21:
+        hand[hand.index(11)] = 1
+        score = sum(hand)
+    return score
+
+def compare(user_score, dealer_score):
+    if user_score > 21:
+        return "You went over. You lose."
+    if dealer_score > 21:
+        return "Dealer went over. You win."
+    if user_score == dealer_score:
+        return "Draw."
+    if user_score == 21:
+        return "Blackjack! You win."
+    if dealer_score == 21:
+        return "Dealer has Blackjack. You lose."
+    if user_score > dealer_score:
+        return "You win!"
+    return "Dealer wins."
+
+# ----------------- wxPython GUI -----------------
+
+class BlackjackFrame(wx.Frame):
+    def __init__(self):
+        super().__init__(None, title="Blackjack (wxPython)", size=(500, 400))
+
+        panel = wx.Panel(self)
+
+        self.deck = []
+        self.user_hand = []
+        self.dealer_hand = []
+
+        title = wx.StaticText(panel, label="Blackjack")
+        title_font = wx.Font(18, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        title.SetFont(title_font)
+
+        self.dealer_label = wx.StaticText(panel, label="Dealer Hand:")
+        self.dealer_cards = wx.StaticText(panel, label="")
+
+        self.user_label = wx.StaticText(panel, label="Your Hand:")
+        self.user_cards = wx.StaticText(panel, label="")
+
+        self.info = wx.StaticText(panel, label="")
+
+        hit_btn = wx.Button(panel, label="Hit")
+        stand_btn = wx.Button(panel, label="Stand")
+        restart_btn = wx.Button(panel, label="Restart Game")
+
+        hit_btn.Bind(wx.EVT_BUTTON, self.hit)
+        stand_btn.Bind(wx.EVT_BUTTON, self.stand)
+        restart_btn.Bind(wx.EVT_BUTTON, self.start_game)
+
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        vbox.Add(title, 0, wx.ALIGN_CENTER | wx.TOP, 10)
+        vbox.Add(self.dealer_label, 0, wx.LEFT | wx.TOP, 10)
+        vbox.Add(self.dealer_cards, 0, wx.LEFT, 20)
+        vbox.Add(self.user_label, 0, wx.LEFT | wx.TOP, 10)
+        vbox.Add(self.user_cards, 0, wx.LEFT, 20)
+        vbox.Add(self.info, 0, wx.ALIGN_CENTER | wx.TOP, 10)
+
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(hit_btn, 0, wx.RIGHT, 10)
+        hbox.Add(stand_btn, 0, wx.RIGHT, 10)
+        hbox.Add(restart_btn, 0)
+
+        vbox.Add(hbox, 0, wx.ALIGN_CENTER | wx.TOP, 15)
+
+        panel.SetSizer(vbox)
+
+        self.start_game()
+        self.Show()
+
+    def start_game(self, event=None):
+        self.deck = create_deck()
+        self.user_hand = [deal_card(self.deck), deal_card(self.deck)]
+        self.dealer_hand = [deal_card(self.deck), deal_card(self.deck)]
+        self.info.SetLabel("Game started!")
+        self.update_display(hide_dealer=True)
+
+    def update_display(self, hide_dealer=False):
+        if hide_dealer:
+            self.dealer_cards.SetLabel(f"[{self.dealer_hand[0]}, ?]")
+        else:
+            self.dealer_cards.SetLabel(str(self.dealer_hand))
+
+        self.user_cards.SetLabel(str(self.user_hand))
+
+    def hit(self, event):
+        self.user_hand.append(deal_card(self.deck))
+        score = calculate_score(self.user_hand)
+        self.update_display(hide_dealer=True)
+        if score >= 21:
+            self.end_game()
+
+    def stand(self, event):
+        self.end_game()
+
+    def end_game(self):
+        while calculate_score(self.dealer_hand) < 17:
+            self.dealer_hand.append(deal_card(self.deck))
+
+        user_score = calculate_score(self.user_hand)
+        dealer_score = calculate_score(self.dealer_hand)
+        result = compare(user_score, dealer_score)
+        self.update_display(hide_dealer=False)
+        wx.MessageBox(result, "Result")
+
+
+class BlackjackApp(wx.App):
+    def OnInit(self):
+        frame = BlackjackFrame()
+        frame.Show(True)
+        return True
+
+
+if __name__ == "__main__":
+    app = BlackjackApp()
+    app.MainLoop()
+
+"""
+ADDING CARD IMAGES (wxPython):
+- Put images in a 'cards/' folder
+- Load with wx.Bitmap('cards/2.png', wx.BITMAP_TYPE_PNG)
+- Display using wx.StaticBitmap instead of StaticText
+
+This version keeps numbers for clarity and learning.
+"""
