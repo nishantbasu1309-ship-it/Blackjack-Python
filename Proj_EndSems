@@ -1,8 +1,6 @@
 import wx
 import random
 
-# ----------------- GAME LOGIC -----------------
-
 def create_deck():
     deck = []
     for _ in range(4):
@@ -34,8 +32,6 @@ def compare(user_score, dealer_score):
     if user_score > dealer_score:
         return "You win!"
     return "Dealer wins."
-
-# ----------------- wxPython GUI -----------------
 
 class BlackjackFrame(wx.Frame):
     def __init__(self):
@@ -134,11 +130,3 @@ if __name__ == "__main__":
     app = BlackjackApp()
     app.MainLoop()
 
-"""
-ADDING CARD IMAGES (wxPython):
-- Put images in a 'cards/' folder
-- Load with wx.Bitmap('cards/2.png', wx.BITMAP_TYPE_PNG)
-- Display using wx.StaticBitmap instead of StaticText
-
-This version keeps numbers for clarity and learning.
-"""
